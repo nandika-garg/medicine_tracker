@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>PillPal - Today's Medicines</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #e8f0ef 0%, #f5f7fa 100%);
+            margin: 0;
+            padding: 30px;
+            color: #2b2b2b;
+        }
+
+        .container { max-width: 900px; margin: auto; }
+
+        h1 { text-align: center; font-size: 44px; color: #1f5c57; margin-bottom: 5px; }
+
+        .subtitle { text-align: center; color: #5a5a5a; font-size: 16px; margin-bottom: 20px; }
+
+        .topbar { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; }
+
+        .links { text-align: center; margin: 15px; font-size: 18px; }
+
+        .links a, .logout-link {
+            margin: 0 8px;
+            text-decoration: none;
+            color: #1f5c57;
+            font-weight: bold;
+            background: white;
+            padding: 10px 18px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.15s ease;
+        }
+
+        .links a:hover, .logout-link:hover { transform: translateY(-2px); }
+
+        .missed-banner {
+            background: #fdeaea;
+            border: 2px solid #e3a0a0;
+            color: #a33;
+            padding: 18px 22px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            font-size: 17px;
+        }
+
+        .missed-banner strong { display: block; font-size: 20px; margin-bottom: 8px; }
+
+        .medicine-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border-left: 6px solid #1f5c57;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .medicine-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+        }
+
+        .medicine-name { font-size: 30px; font-weight: bold; color: #1f5c57; }
+        .dosage { font-size: 20px; margin-top: 6px; color: #444; }
+        .time { font-size: 24px; margin-top: 12px; }
+        .stock { font-size: 18px; margin-top: 10px; color: #444; }
+
+        .take-button {
+            width: 100%; padding: 20px; margin-top: 18px;
+            font-size: 26px; font-weight: bold; border: none; border-radius: 14px;
+            cursor: pointer; background: #4CAF50; color: white;
+            transition: opacity 0.15s ease;
+        }
+        .take-button:hover { opacity: 0.88; }
+
+        .refill-row {
+            display: flex; gap: 10px; margin-top: 14px;
+        }
+        .refill-row input[type="number"] {
+            flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ccc; font-size: 16px;
+        }
+        .refill-button {
+            padding: 10px 18px; font-size: 16px; font-weight: bold;
+            border: none; border-radius: 10px; cursor: pointer;
+            background: #e8f0ef; color: #1f5c57;
+        }
+        .refill-button:hover { background: #dbe9e7; }
+
+        .delete-button {
+            width: 100%; padding: 12px; margin-top: 10px;
+            font-size: 16px; font-weight: bold; border: none; border-radius: 12px;
+            cursor: pointer; background: #f5e8e8; color: #b33a3a;
+            transition: background 0.15s ease;
+        }
+        .delete-button:hover { background: #f0d4d4; }
+
+        .low-stock {
+            font-size: 18px; font-weight: bold; margin-top: 10px; color: #b8860b;
+            background: #fff6e0; display: inline-block; padding: 6px 14px; border-radius: 10px;
+        }
+
+        .out-of-stock {
+            font-size: 20px; font-weight: bold; margin-top: 18px; color: #b33a3a;
+            background: #fdeaea; display: inline-block; padding: 8px 16px; border-radius: 10px;
+        }
+
+        .reminder {
+            display: none; position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%; max-width: 500px;
+            background: white; padding: 40px; border-radius: 30px; text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); z-index: 1000;
+        }
+        .reminder-icon { font-size: 80px; }
+        .reminder h2 { font-size: 36px; margin: 15px 0; color: #1f5c57; }
+        .reminder p { font-size: 26px; }
+        .reminder-button {
+            width: 100%; padding: 22px; font-size: 28px; font-weight: bold;
+            border: none; border-radius: 18px; background: #4CAF50; color: white; cursor: pointer;
+        }
+        .close-button {
+            margin-top: 15px; padding: 14px 28px; font-size: 18px;
+            border: none; border-radius: 12px; cursor: pointer; background: #eee;
+        }
+    </style>
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <h1>💊 PillPal</h1>
+    <p class="subtitle">
+        {% if patient_name %}Caring for {{ patient_name }}{% endif %}
+    </p>
+
+    <div class="links">
+        <a href="/add-medicine">➕ Add Medicine</a>
+        <a href="/history">📋 Dose History</a>
+        <a href="/logout" class="logout-link">🚪 Log Out</a>
+    </div>
+
+    {% if missed_today %}
+    <div class="missed-banner">
+        <strong>⚠️ Missed Doses Today</strong>
+        {% for item in missed_today %}
+            {{ item }}<br>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+
+    {% for med in medicines %}
+
+    <div class="medicine-card">
+
+        <div class="medicine-name">{{ med.icon }} {{ med.name }}</div>
+        <div class="dosage">{{ med.dosage }}</div>
+        <div class="time">🕐 {{ med.dose_times }}</div>
+        <div class="stock">Stock: {{ med.stock }}</div>
+
+        {% if med.stock <= med.threshold %}
+        <div class="low-stock">⚠️ Low Stock</div>
+        {% endif %}
+
+        {% if med.stock > 0 %}
+        <form action="/take-dose/{{ med.id }}" method="POST">
+            <button class="take-button" type="submit">✓ TAKE DOSE</button>
+        </form>
+        {% else %}
+        <div class="out-of-stock">❌ OUT OF STOCK</div>
+        {% endif %}
+
+        <form action="/refill/{{ med.id }}" method="POST" class="refill-row">
+            <input type="number" name="refill_amount" min="1" placeholder="Refill amount" required>
+            <button class="refill-button" type="submit">🔄 Refill</button>
+        </form>
+
+        <form action="/delete-medicine/{{ med.id }}" method="POST"
+              onsubmit="return confirm('Remove {{ med.name }} from your list?');">
+            <button class="delete-button" type="submit">🗑 Delete Medicine</button>
+        </form>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+
+<div id="reminder" class="reminder">
+    <div class="reminder-icon">💊</div>
+    <h2>Time for your medicine</h2>
+    <p id="reminder-text"></p>
+    <button id="reminder-take" class="reminder-button">✓ TAKE DOSE</button>
+    <button class="close-button" onclick="closeReminder()">Close</button>
+</div>
+
+
+<script>
+
+let currentMedicineId = null;
+
+function showReminder(medicineId, medicineName) {
+    currentMedicineId = medicineId;
+    document.getElementById("reminder-text").innerText = "Time to take " + medicineName;
+
+    if ("speechSynthesis" in window) {
+        const message = new SpeechSynthesisUtterance("Time to take " + medicineName);
+        message.rate = 0.9;
+        speechSynthesis.cancel();
+        speechSynthesis.speak(message);
+    }
+
+    document.getElementById("reminder").style.display = "block";
+
+    if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("💊 PillPal Reminder", { body: "Time to take " + medicineName });
+    }
+}
+
+document.getElementById("reminder-take").onclick = function() {
+    if (currentMedicineId) {
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = "/take-dose/" + currentMedicineId;
+        document.body.appendChild(form);
+        form.submit();
+    }
+};
+
+function closeReminder() {
+    document.getElementById("reminder").style.display = "none";
+}
+
+function checkReminders() {
+    const now = new Date();
+    const currentHour = String(now.getHours()).padStart(2, "0");
+    const currentMinute = String(now.getMinutes()).padStart(2, "0");
+    const currentTime = currentHour + ":" + currentMinute;
+
+    {% for med in medicines %}
+    const doseTimes{{ med.id }} =
+        "{{ med.dose_times or '' }}".split(",").map(time => time.trim());
+
+    if (doseTimes{{ med.id }}.includes(currentTime)) {
+        const reminderKey =
+            "pillpal_" + "{{ med.id }}" + "_" + now.toDateString() + "_" + currentTime;
+
+        if (!localStorage.getItem(reminderKey)) {
+            localStorage.setItem(reminderKey, "true");
+            showReminder({{ med.id }}, "{{ med.name }}");
+        }
+    }
+    {% endfor %}
+}
+
+if ("Notification" in window) {
+    if (Notification.permission === "default") {
+        Notification.requestPermission();
+    }
+}
+
+checkReminders();
+setInterval(checkReminders, 30000);
+
+</script>
+
+</body>
+
+</html>
