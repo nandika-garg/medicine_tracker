@@ -1,7 +1,7 @@
 import sqlite3
 
-def init_db():
-    conn = sqlite3.connect("tracker.db")
+def init_db(db_path="tracker.db"):
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -24,6 +24,7 @@ def init_db():
             threshold INTEGER,
             dose_times TEXT,
             icon TEXT DEFAULT '💊',
+            active INTEGER DEFAULT 1,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     """)

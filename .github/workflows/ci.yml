@@ -21,8 +21,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install flask
+          pip install flask pytest
 
-      - name: Check app imports correctly
+      - name: Run tests
         run: |
-          python -c "import app; print('App imports successfully')"
+          python -m pytest -v

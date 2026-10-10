@@ -5,12 +5,12 @@ import sqlite3
 
 app = Flask(__name__)
 app.secret_key = "change-this-to-any-random-string"  # needed for sessions/flash messages
+app.config["DATABASE"] = "tracker.db"
 
 MISSED_DOSE_GRACE_MINUTES = 30  # how long to wait before marking a dose "missed"
 
-
 def get_db():
-    conn = sqlite3.connect("tracker.db")
+    conn = sqlite3.connect(app.config["DATABASE"])
     conn.row_factory = sqlite3.Row
     return conn
 
